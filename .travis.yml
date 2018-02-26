@@ -1,0 +1,10 @@
+language: generic
+services:
+  - docker
+jobs:
+  include:
+    - stage: Build
+      script:
+        - docker pull debian:stretch:latest
+        - echo Hello, world.
+        - date
