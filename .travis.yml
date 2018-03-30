@@ -5,6 +5,6 @@ jobs:
   include:
     - stage: Build
       script:
-        - docker pull debian:stretch:latest
-        - echo Hello, world.
-        - date
+        - docker pull debian:latest
+        - docker run --rm debian:latest echo Hello, world
+        - docker run --rm debian:latest date
