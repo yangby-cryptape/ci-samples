@@ -5,6 +5,12 @@ jobs:
   include:
     - stage: Build
       script:
-        - docker pull debian:latest
-        - docker run --rm debian:latest echo Hello, world
-        - docker run --rm debian:latest date
+        - docker exec kcov-docker bash ".scripts/build"
+
+before_script:
+  - docker pull debian:latest
+  - docker run -d --rm --name kcov-docker $(bash <(curl -s https://codecov.io/env)) -v "$(pwd):/root/work" -w "/root/work" debian:latest sleep 3600
+
+after_success:
+  - docker exec kcov-docker bash ".scripts/run-kcov" "travis-ci" "${TRAVIS_JOB_ID}"
+  - docker stop -t 1 kcov-docker

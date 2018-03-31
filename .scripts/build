@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Dependencies
+apt-get update
+apt-get upgrade --yes
+apt-get install --yes gcc
+# Build
+[ -d "build" ] || mkdir build
+gcc -coverage -g -O0 src/main.c -o build/main

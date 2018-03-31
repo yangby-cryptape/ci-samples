@@ -3,11 +3,43 @@ jobs:
   build:
     docker:
       - image: debian:latest
+    working_directory: ~/work
     steps:
       - checkout
       - run:
-          name: Greeting
-          command: echo Hello, world.
+          name: Build
+          command: bash ".scripts/build"
       - run:
-          name: Print the Current Time
-          command: date
+          name: For Cache
+          command: |
+            apt-get update \
+            && apt-get upgrade --yes \
+            && apt-get install --yes ca-certificates
+      - save_cache:
+          key: work-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/work
+  coverage:
+    docker:
+      - image: debian:latest
+    working_directory: ~/work
+    steps:
+      - run:
+          name: For Cache
+          command: |
+            apt-get update \
+            && apt-get upgrade --yes \
+            && apt-get install --yes ca-certificates
+      - restore_cache:
+          key: work-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Run Kcov
+          command: bash ".scripts/run-kcov" "circle-ci" "${CIRCLE_BUILD_NUM}" "${COVERALLS_REPO_TOKEN}"
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      - build
+      - coverage:
+          requires:
+            - build

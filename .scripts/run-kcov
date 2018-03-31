@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Parameters
+if [ -z "${1}" ] || [ -z "${2}" ]; then
+    exit 1
+fi
+service_name=${1}
+service_job_id=${2}
+if [ -n "${3}" ]; then
+    coveralls_flags="--coveralls-id=${3}"
+else
+    coveralls_flags="--coveralls-id=0"
+fi
+# Dependencies
+apt-get update
+apt-get upgrade --yes
+apt-get install --yes \
+    wget curl make cmake g++ pkg-config python \
+    binutils-dev libiberty-dev \
+    libelf-dev libasm-dev libdw-dev \
+    zlib1g-dev libcurl4-openssl-dev
+# Kcov
+branch=support_for_coveralls_via_circleci
+wget https://github.com/yangby-cryptape/kcov/archive/${branch}.tar.gz
+tar xzf ${branch}.tar.gz
+cd kcov-${branch}
+mkdir build
+cd build
+cmake ..
+make
+make install
+cd ../..
+rm -rf kcov-${branch}
+# Codecov
+mkdir -p kcov-codecov
+kcov --include-path="$(pwd)" --strip-path="$(pwd)/" \
+    kcov-codecov build/main
+bash <(curl -s https://codecov.io/bash) -s kcov-codecov
+# Coveralls
+mkdir -p kcov-coveralls
+kcov --include-path="$(pwd)" --strip-path="$(pwd)/" \
+    --configure=coveralls-service-name=${service_name} \
+    --configure=coveralls-job-id=${service_job_id} \
+    ${coveralls_flags} \
+    kcov-coveralls build/main
